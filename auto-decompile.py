@@ -7,7 +7,7 @@
 
 import os
 import subprocess
-import itertools
+import sys
 
 def main():
     
@@ -25,7 +25,7 @@ def main():
         print("Could not find project directory...")
         exit(1)
     
-   # Create directories for each binary to store analyzed methods   
+    # Create directories for each binary to store analyzed methods   
     binary_file = open("binaries_list.txt","r")
     binary_list = binary_file.readlines()
     binary_file.close()
@@ -91,7 +91,9 @@ def getMethods(abs_binary_path):
     subprocess.run("rm methods.txt 2> /dev/null", shell=True)
 
     subprocess.run("objdump -t " + abs_binary_path + " | grep .text >> methods.txt 2> /dev/null", shell=True)
-    
+
+    omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
+
     method_file = open("methods.txt","r")
     method_lst = method_file.readlines()
     method_file.close()
@@ -99,9 +101,10 @@ def getMethods(abs_binary_path):
 
     method_file = open("methods.txt","w")
     address_method = []
+    i = 0
     for line in method_lst:
         line = line.strip().split()
-        
+
         # Formatting Ghidra address
         address = line[0] + "1"
         address = address.strip("0")
@@ -112,7 +115,8 @@ def getMethods(abs_binary_path):
         # Writing to methods.txt
         address_method = address + " " + line[-1]
         method_file.write(address_method + '\n')
-
+        
+        i += 1
 
     method_file.close()
 
