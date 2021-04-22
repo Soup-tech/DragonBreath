@@ -1,13 +1,16 @@
 #!/usr/bin/python3
 #
-# ./analyzeHeadless <Project Directory> <Project Name> -import <Binary Name> -postScript GhidraDecompiler.java <Function Address> -deleteProject
+# This script is built off of guedou's GhidraDecompiler.java script. 
+# 
+# Some tweaking to meet personal needs is the depth of the top level directory and methods to omit. This will be clearly marked within this source code. 
+#
 
 import os
 import subprocess
 import itertools
 
 def main():
-
+    
     # Get all binary locations from top-level directory
     top_directory = getBinary()
     
@@ -27,14 +30,22 @@ def main():
     binary_list = binary_file.readlines()
     binary_file.close()
 
+    # analyzeHeadless absolute path
     analyzeHeadless = input("Specify analyzeHeadless absolute path: ")
 
+    # The main operation of the script. ex represents the executable, makes the directory for the analysis,
+    # makes a list of all the methods that were found, and finally analyzes them
     for ex in binary_list:
         ex = ex.strip()
         makeDirectory(ex)
         getMethods(ex)
         dragonBreath(analyzeHeadless, top_directory, project_directory, ex)
 
+# Runs the Ghidra Decompiler analysis on the binary with all the associated parts
+# @param analyzeHeadless Absolute path to the analyzeHeadless executable
+# @param top_directory The top level directory which contains all the executables
+# @param project_directory The absolute path to Ghidra's project directory
+# @param abs_binary_path The absolute path to the binary that is being analyzed
 def dragonBreath(analyzeHeadless, top_directory, project_directory, abs_binary_path):
     # ./analyzeHeadless <project directory> <project name> -import <binary name> -postScript GhidraDecompiler.java <function address> -deleteProject
     
@@ -61,7 +72,11 @@ def dragonBreath(analyzeHeadless, top_directory, project_directory, abs_binary_p
 
     os.system("rm methods.txt")
 
+# This method makes a directory for every executable and will store Ghidra's analysis
+# of the method within this directory
+# @param abs_binary_path The absolute path to the binary being analyzed
 def makeDirectory(abs_binary_path):
+    
     myList = abs_binary_path.split('/')
     binary = myList[-1]
     del myList[-1]
@@ -70,7 +85,11 @@ def makeDirectory(abs_binary_path):
     
     subprocess.run("mkdir " + abs_Directory + "src_Ghidra_" + binary + " 2> /dev/null", shell=True)
 
+# This method gets all of the methods for the binary being analyzed and stores them into methods.txt for later use
+# @param abs_binary_path The absolute path to the binary being analyzed
 def getMethods(abs_binary_path):
+    subprocess.run("rm methods.txt 2> /dev/null", shell=True)
+
     subprocess.run("objdump -t " + abs_binary_path + " | grep .text >> methods.txt 2> /dev/null", shell=True)
     
     method_file = open("methods.txt","r")
@@ -98,6 +117,7 @@ def getMethods(abs_binary_path):
     method_file.close()
 
 # Gets the absolute path of all executables in the top level directory
+# @return Returns the absolute path to the top level directory as a string
 def getBinary():
     try:
         top_directory = input("Specify top level directory: ")
@@ -106,7 +126,7 @@ def getBinary():
         exist = "DNE"
 
     if (exist == "DNE"):
-        print("Could not find directory...")
+        print("Could not find top-level directory...")
         exit(1)
 
     os.system("find " + top_directory + " -maxdepth 2 -executable -type f | sort > binaries_list.txt")
