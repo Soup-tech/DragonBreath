@@ -41,6 +41,9 @@ def main():
         getMethods(ex)
         dragonBreath(analyzeHeadless, top_directory, project_directory, ex)
 
+    os.system("rm binaries_list.txt methods.txt")
+
+
 # Runs the Ghidra Decompiler analysis on the binary with all the associated parts
 # @param analyzeHeadless Absolute path to the analyzeHeadless executable
 # @param top_directory The top level directory which contains all the executables
@@ -92,6 +95,7 @@ def getMethods(abs_binary_path):
 
     subprocess.run("objdump -t " + abs_binary_path + " | grep .text >> methods.txt 2> /dev/null", shell=True)
 
+    # *** Add and remove what methods should / shouldn't be analyzed here ***
     omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
 
     method_file = open("methods.txt","r")
@@ -104,6 +108,9 @@ def getMethods(abs_binary_path):
     i = 0
     for line in method_lst:
         line = line.strip().split()
+        
+        if line[-1] in omit:
+            continue
 
         # Formatting Ghidra address
         address = line[0] + "1"
