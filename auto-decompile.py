@@ -17,16 +17,13 @@ def main():
     
     getBinary(sys.argv[1])
 
-    # analyzeHeadless absolute path
-    analyzeHeadless = sys.argv[3] 
-
     # The main operation of the script. ex represents the executable, makes the directory for the analysis,
     # makes a list of all the methods that were found, and finally analyzes them
     for ex in open('binaries_list.txt','r'):
         ex = ex.strip()
         makeDirectory(ex)
         getMethods(ex)
-        dragonBreath(analyzeHeadless, sys.argv[1], sys.argv[2], ex)
+        dragonBreath(sys.argv[1], sys.argv[2], sys.argv[3], ex)
 
     # os.system("rm binaries_list.txt methods.txt")
 
@@ -39,31 +36,25 @@ def usage():
 # @param top_directory The top level directory which contains all the executables
 # @param project_directory The absolute path to Ghidra's project directory
 # @param abs_binary_path The absolute path to the binary that is being analyzed
-def dragonBreath(analyzeHeadless, top_directory, project_directory, abs_binary_path):
+def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_binary_path):
     # ./analyzeHeadless <project directory> <project name> -import <binary name> -postScript GhidraDecompiler.java <function address> -deleteProject
     
-    method_file = open("methods.txt","r")
-    method_list = method_file.readlines()
-    method_file.close()
 
-    # Project name / Binary 
-    binary_path = abs_binary_path.split("/")
+    project = abs_binary_path
+    project = abs_binary_path.split("/")
+    project_name = project[-1]
+    del project[-1]
+    project_directory = "/".join(project)
     
-    project_name = binary_path[-1]
-    del binary_path[-1]
-    binary_path = "/".join(binary_path)
-
-    print("----- Started running Ghidra analysis on: " + project_name)
-    for line in method_list:
+    print("===== Started Running Ghidra Analysis On: " + project_name)
+    for line in open('update_method_list.txt','r'):
         line = line.strip().split()
-        address = line[0]   
-        print("---------- Started Decompiling: " + line[1])
-        subprocess.run(analyzeHeadless + " " + project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " 
-                                  + binary_path + "/src_Ghidra_" + project_name + "/" + line[1], shell=True)
-        print("---------- Finished Decompling: " + line[1])
-    print("----- Finished running Ghidra analysis on: " + project_name)
+        address = line[0]
 
-    os.system("rm methods.txt")
+        print("========== Started Running Ghidra Analysis On: " + line[1])
+        subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1], shell=True)
+        print("========== Finished Decompiling: " + line[1])
+    print("===== Finished Running Ghidra Analysis On: " + project_name)
 
 # This method makes a directory for every executable and will store Ghidra's analysis
 # of the method within this directory
@@ -75,7 +66,7 @@ def makeDirectory(abs_binary_path):
     del myList[-1]
     abs_Directory = "/".join(myList)
     abs_Directory = abs_Directory + "/"
-    
+
     proc = subprocess.Popen("mkdir " + abs_Directory + "src_Ghidra_" + binary + " 2> /dev/null", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
 
@@ -83,11 +74,13 @@ def makeDirectory(abs_binary_path):
 # @param abs_binary_path The absolute path to the binary being analyzed
 def getMethods(abs_binary_path):
     subprocess.run("rm methods.txt 2> /dev/null", shell=True)
-
+    subprocess.run("rm update_method_list.txt 2> /dev/null", shell=True)
     subprocess.run("objdump -t " + abs_binary_path + " | grep .text >> methods.txt 2> /dev/null", shell=True)
 
     # *** Add and remove what methods should / shouldn't be analyzed here ***
     omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
+
+    update_method_file = open("update_method_list.txt","w")
 
     for line in open('methods.txt','r'):
         line = line.strip().split()
@@ -104,8 +97,10 @@ def getMethods(abs_binary_path):
         
         # Writing to methods.txt
         address_method = address + " " + line[-1]
-        method_file.write(address_method + '\n')
+        update_method_file.write(address_method + '\n')
 
+    os.system("rm methods.txt")
+    update_method_file.close()
 
 # Gets the absolute path of all executables in the top level directory
 # @return Returns the absolute path to the top level directory as a string
