@@ -3,7 +3,7 @@
     <h1>DragonBreath</h1>
     <h2>Mass Decompiling Executables Using Ghidra</h2>
     <h3>Need the decompiled output of every function from Ghidra? Let DragonBreath find all the functions and decompile them for you! So kick back and enjoy the roasting of your enemies... Er, I mean executables...</h3>
-    <img src='assets/Dracarys.gif' width='90%'>
+    <img src='assets/Dracarys.gif' width='100%'>
   </header>
   
   <body>
