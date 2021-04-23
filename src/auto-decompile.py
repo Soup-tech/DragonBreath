@@ -11,7 +11,11 @@ import sys
 
 def main():
     
-    if (len(sys.argv) != 4):
+    if (len(sys.argv) < 4):
+        usage()
+        exit(1)
+
+    if (('-h' in sys.argv) or ('--help' in sys.argv)):
         usage()
         exit(1)
     
@@ -25,10 +29,13 @@ def main():
         getMethods(ex)
         dragonBreath(sys.argv[1], sys.argv[2], sys.argv[3], ex)
 
-    # os.system("rm binaries_list.txt methods.txt")
 
 def usage():
-    print("Usage: python3 auto-decompile.py [Top Level Directory] [Ghidra Project Directory] [analyzeHeadless Absolute Path]")
+    print("USAGE: python3 auto-decompile.py [Top Level Directory] [Ghidra Project Directory] [analyzeHeadless Absolute Path]\n" +
+          "OPTIONS:\n " +
+          "\t-h --help\tDisplay this Usage Message\n" +
+          "\t-q --quiet\tDo Not Dispaly Ghidra Output\n" +
+          "\t-o --output\tOutput logs to a File")
 
 
 # Runs the Ghidra Decompiler analysis on the binary with all the associated parts
