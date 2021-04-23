@@ -1,9 +1,5 @@
 #!/usr/bin/python3
 #
-# This script is built off of guedou's GhidraDecompiler.java script. 
-# 
-# python3 auto-decompile.py [Top Level Directory] [Ghidra Project Directory] [analyzeHeadless absolute path]
-# 
 
 import os
 import subprocess
@@ -33,9 +29,9 @@ def main():
 def usage():
     print("USAGE: python3 auto-decompile.py [Top Level Directory] [Ghidra Project Directory] [analyzeHeadless Absolute Path]\n" +
           "OPTIONS:\n " +
-          "\t-h --help\tDisplay this Usage Message\n" +
-          "\t-q --quiet\tDo Not Dispaly Ghidra Output\n" +
-          "\t-o --output\tOutput logs to a File")
+          "\t-h --help\t: Display this Usage Message\n" +
+          "\t-q --quiet\t: Do Not Dispaly Ghidra Output\n" +
+          "\t-o --output\t: Output logs to a File")
 
 
 # Runs the Ghidra Decompiler analysis on the binary with all the associated parts
