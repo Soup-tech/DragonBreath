@@ -1,4 +1,4 @@
 # DragonBreath
 Mass decompiling executables using Ghidra
 
-![](assets/Dracarys.gif)
+![Banner](assets/Dracarys.gif)
