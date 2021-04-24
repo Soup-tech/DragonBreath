@@ -1,12 +1,11 @@
-// Copyright (C) 2019 Guillaume Valadon <guillaume@valadon.net>
-// This program is published under a GPLv2 license
+//TODO write a description for this script
+//@author 
+//@category _NEW_
+//@keybinding 
+//@menupath 
+//@toolbar 
 
-/*
- * Decompile a function with Ghidra
- *
- * analyzeHeadless . Test.gpr -import $BINARY_NAME -postScript GhidraDecompiler.java $FUNCTION_ADDRESS -deleteProject -noanalysis
- *
-*/
+import ghidra.app.script.GhidraScript;
 
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.DecompInterface;
@@ -117,3 +116,4 @@ public class GhidraDecompiler extends HeadlessScript {
   }
 
 }
+
