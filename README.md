@@ -8,7 +8,7 @@
   
   <body>
     <h2>Usage</h2>
-    <p>./dragonBreath [Top Level Directory] [Ghidra Project Directory] [analyzeHeadless Absolute Path] [option] ... [-h help | -q quiet]
+    <p>./dragonBreath.py [Top Level Directory] [Ghidra Project Directory] [analyzeHeadless Absolute Path] [option] ... [-h help | -q quiet]
     <p> <strong>Top Level Directory:</strong> The directory where all of your binaries are stored. Currently, the script will detect any executables within the depth of two directories.</p>
     <p> <strong>Ghidra Project Directory:</strong> The directory to your Ghidra Project Folder. This needs to be created in Ghidra GUI before this script can be run.</p>
     <p> <strong>analyzeHeadless Absolute Path: </strong> The absolute path to the analyzeHeadless exectuable. This will be under your Ghidra folder in the support directory.</p>
