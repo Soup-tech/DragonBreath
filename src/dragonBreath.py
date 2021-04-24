@@ -31,7 +31,8 @@ def usage():
           "OPTIONS:\n " +
           "\t-h --help\t: Display this Usage Message\n" +
           "\t-q --quiet\t: Do Not Dispaly Ghidra Output\n" +
-          "\t-o --output\t: Output logs to a File")
+          "\t-o --output\t: Output logs to a File\n" +
+          "\t-s --single\t: Operate on a Single Executable")
 
 
 # Runs the Ghidra Decompiler analysis on the binary with all the associated parts
@@ -42,7 +43,6 @@ def usage():
 def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_binary_path):
     # ./analyzeHeadless <project directory> <project name> -import <binary name> -postScript GhidraDecompiler.java <function address> -deleteProject
     
-
     project = abs_binary_path
     project = abs_binary_path.split("/")
     project_name = project[-1]
