@@ -32,7 +32,9 @@ def usage():
           "\t-h --help\t: Display this Usage Message\n" +
           "\t-q --quiet\t: Do Not Dispaly Ghidra Output\n" +
           "\t-o --output\t: Output logs to a File\n" +
-          "\t-s --single\t: Operate on a Single Executable")
+          "\t-c --continue\t: Have dragonBreath pick up where it left off\n" +
+          "Note: You can run this script on single executables by replacing Top Level Direcotry with the absolute path to the\n" +
+          "executable.")
 
 
 # Runs the Ghidra Decompiler analysis on the binary with all the associated parts
@@ -118,14 +120,6 @@ def getMethods(abs_binary_path):
 # Gets the absolute path of all executables in the top level directory
 # @return Returns the absolute path to the top level directory as a string
 def getBinary(top_level_directory):
-    
-    proc = subprocess.Popen('cd ' + top_level_directory, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stderr, stdout = proc.communicate()
-
-    if (proc.returncode != 0):
-        print("Top level directory does not exist")
-        exit(1)
-    
     os.system("find " + top_level_directory + " -maxdepth 2 -executable -type f | sort > binaries_list.txt")
     
 
