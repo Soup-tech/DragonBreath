@@ -92,7 +92,7 @@ def getMethods(abs_binary_path):
     subprocess.run("rm update_method_list.txt 2> /dev/null", shell=True)
     subprocess.run("objdump -t " + abs_binary_path + " | grep .text >> methods.txt 2> /dev/null", shell=True)
 
-    # *** Add and remove what methods should / shouldn't be analyzed here ***
+    # *** Add and remove what methods shouldn't be analyzed here ***
     omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
 
     update_method_file = open("update_method_list.txt","w")
