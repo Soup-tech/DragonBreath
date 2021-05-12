@@ -33,7 +33,7 @@ def usage():
           "\t-q --quiet\t: Do Not Dispaly Ghidra Output\n" +
           "\t-o --output\t: Output logs to a File\n" +
           "\t-c --continue\t: Have dragonBreath pick up where it left off\n" +
-          "Note: You can run this script on single executables by replacing Top Level Direcotry with the absolute path to the\n" +
+          "Note: You can run this script on single executables by replacing Top Level Directory with the absolute path to the\n" +
           "executable.")
 
 
