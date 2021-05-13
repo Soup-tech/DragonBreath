@@ -33,7 +33,7 @@ def usage():
           "\t-q --quiet\t: Do Not Dispaly Ghidra Output\n" +
           "\t-o --output\t: Output logs to a File\n" +
           "\t-c --continue\t: Have dragonBreath pick up where it left off\n" +
-          "Note: You can run this script on single executables by replacing Top Level Direcotry with the absolute path to the\n" +
+          "Note: You can run this script on single executables by replacing Top Level Directory with the absolute path to the\n" +
           "executable.")
 
 
@@ -49,11 +49,11 @@ def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_b
     project = abs_binary_path.split("/")
     project_name = project[-1]
     del project[-1]
-    project_directory = "/".join(project)
+    project_directory = ("/".join(project)) + "/"
 
     if (('-q' in sys.argv) or ('--quiet' in sys.argv)):
 	    print("===== Started Running Ghidra Analysis On: " + project_name)
-	    for line in open('update_method_list.txt','r'):
+	    for line in open(project_directory + 'update_method_list.txt','r'):
 	        line = line.strip().split()
 	        address = line[0]
 
@@ -62,7 +62,7 @@ def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_b
 	        print("========== Finished Decompiling: " + line[1])
     else:
 	    print("===== Started Running Ghidra Analysis On: " + project_name)
-	    for line in open('update_method_list.txt','r'):
+	    for line in open(project_directory + 'update_method_list.txt','r'):
 	        line = line.strip().split()
 	        address = line[0]
 
@@ -91,11 +91,15 @@ def getMethods(abs_binary_path):
     subprocess.run("rm methods.txt 2> /dev/null", shell=True)
     subprocess.run("rm update_method_list.txt 2> /dev/null", shell=True)
     subprocess.run("objdump -t " + abs_binary_path + " | grep .text >> methods.txt 2> /dev/null", shell=True)
-
+    
     # *** Add and remove what methods shouldn't be analyzed here ***
     omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
 
-    update_method_file = open("update_method_list.txt","w")
+    project_path = abs_binary_path.split("/")
+    del project_path[-1]
+    project_path = ("/".join(project_path)) + "/"
+
+    update_method_file = open(project_path + "update_method_list.txt","w")
 
     for line in open('methods.txt','r'):
         line = line.strip().split()
