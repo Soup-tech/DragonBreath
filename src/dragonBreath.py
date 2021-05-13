@@ -120,7 +120,7 @@ def getMethods(abs_binary_path):
 # Gets the absolute path of all executables in the top level directory
 # @return Returns the absolute path to the top level directory as a string
 def getBinary(top_level_directory):
-    os.system("find " + top_level_directory + " -maxdepth 2 -executable -type f | sort > binaries_list.txt")
+    os.system("find " + top_level_directory + " -maxdepth 2 -executable -type f | sort > ghidra_binaries_list.txt")
     
 
 if __name__ == "__main__":
