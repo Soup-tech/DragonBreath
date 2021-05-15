@@ -7,12 +7,10 @@ class manyDecompile:
     # Constructor
     def __init__(self):
         self.top_level_directory = ""
-        self.binary_path = "file"
+        self.binary_path = ""
         self.decompiler_path = ""
         self.ghidra_project_folder = ""
         self.omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
-        self.methods = []
-        self.binaries = []
 
     # Setters
     def setDirectory(self, directory):
@@ -46,9 +44,6 @@ class manyDecompile:
     
     def getOmit(self):
         return self.omit
-
-    def getMethods(self):
-        return self.methods
 
     # Used for debugging
     def printAll(self):
@@ -85,27 +80,12 @@ class manyDecompile:
         if (not self.top_level_directory):
             print("Error: Top level directory not set")
             return False
-
-        print("Would you like to save the binaries to a file? [y/n]")
-        decision = input("> ")
-
-        if (decision == 'y'):
-            subprocess.run("find " + self.top_level_directory + " -maxdepth 2 -executable -type f | sort > binary_list.txt" ,shell=True)
-            self.binaries = "file"
-        elif (decision == 'n'):
-            self.binaries = subprocess.run("find -maxdepth 2 -executable -type f | sort",shell=True,captrue_output=True)
-        return True
+        
+        subprocess.run("find " + self.top_level_directory + " -maxdepth 2 -executable -type f | sort > binary_list.txt" ,shell=True)
 
     def fetchMethods(self):
-        if (not self.binary_path): # Is binary_path set?
-            print("Error: Absolute binary path not set")
-            return False
-        
-        print("Would you like to save the methods to a file? [y/n]")
-        decision = input("> ")
-
-        if (decision == 'y'):
-            update_method_list = open("methods.txt","w")
+       
+        update_method_list = open("methods.txt","w")
 
         print("Fetching Methods...")
         subprocess.run("objdump -t " + self.binary_path + " | grep .text >> methods.raw 2> /dev/null",shell=True)
@@ -124,16 +104,10 @@ class manyDecompile:
             del address[-1]
             address = "".join(address)
 
-            if (decision == 'y'):
-                update_method_list.write(address + " " + line[-1] + "\n")
-            else:
-                self.methods.append(address + " " + line[-1])
+            update_method_list.write(address + " " + line[-1] + "\n")
 
-        subprocess.run("rm methods.raw 2> /dev/null",shell=True)
-
-        if (decision == 'y'):
-            update_method_list.close()
-
+        subprocess.run("rm methods.raw 2> /dev/null",shell=True)        
+        update_method_list.close()
         return True
 
     def makeDirectories(self):
@@ -178,7 +152,18 @@ class manyDecompile:
             matey()
 
 
-    #def dragonBreath(self):
+    def dragonBreath(self):
+    	print("dragonBreath")
+    	# ./analyzeHeadless <project directory> <project name> -import <binary name> -postScript GhidraDecompiler.java <function address> -deleteProject
+
+    	for ex in open('binary_list.txt','r'):
+    		
+
+    		
+
+    	subprocess.run(self.decompiler_path + " " + self.ghidra_project_folder + )
+
+
 
 
     #def matey(self):
