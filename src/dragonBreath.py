@@ -58,7 +58,12 @@ def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_b
 	        address = line[0]
 
 	        print("========== Started Running Ghidra Analysis On: " + line[1])
-	        subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1] + ' 2> /dev/null', shell=True)
+	        
+	        try:
+	        	subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1] + ' 2> /dev/null', shell=True)
+	        except:
+	        	pass
+
 	        print("========== Finished Decompiling: " + line[1])
     else:
 	    print("===== Started Running Ghidra Analysis On: " + project_name)
@@ -67,7 +72,12 @@ def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_b
 	        address = line[0]
 
 	        print("========== Started Running Ghidra Analysis On: " + line[1])
-	        subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1], shell=True)
+	        
+	        try:
+	      		subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1], shell=True)
+	        except:
+	        	pass
+	        	
 	        print("========== Finished Decompiling: " + line[1])
 	    print("===== Finished Running Ghidra Analysis On: " + project_name)
 
@@ -124,7 +134,7 @@ def getMethods(abs_binary_path):
 # Gets the absolute path of all executables in the top level directory
 # @return Returns the absolute path to the top level directory as a string
 def getBinary(top_level_directory):
-    os.system("find " + top_level_directory + " -maxdepth 2 -executable -type f | sort > ghidra_binaries_list.txt")
+    os.system("find " + top_level_directory + " -maxdepth 2 -executable -type f | sort > binaries_list.txt")
     
 
 if __name__ == "__main__":
