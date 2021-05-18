@@ -52,34 +52,34 @@ def dragonBreath(top_directory, ghidra_project_directory, analyzeHeadless, abs_b
     project_directory = ("/".join(project)) + "/"
 
     if (('-q' in sys.argv) or ('--quiet' in sys.argv)):
-	    print("===== Started Running Ghidra Analysis On: " + project_name)
-	    for line in open(project_directory + 'update_method_list.txt','r'):
-	        line = line.strip().split()
-	        address = line[0]
+        print("===== Started Running Ghidra Analysis On: " + project_name)
+        for line in open(project_directory + 'update_method_list.txt','r'):
+            line = line.strip().split()
+            address = line[0]
 
-	        print("========== Started Running Ghidra Analysis On: " + line[1])
-	        
-	        try:
-	        	subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1] + ' 2> /dev/null', shell=True)
-	        except:
-	        	pass
+            print("========== Started Running Ghidra Analysis On: " + line[1])
+            
+            try:
+                subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1] + ' 2> /dev/null', shell=True)
+            except:
+                pass
 
-	        print("========== Finished Decompiling: " + line[1])
+            print("========== Finished Decompiling: " + line[1])
     else:
-	    print("===== Started Running Ghidra Analysis On: " + project_name)
-	    for line in open(project_directory + 'update_method_list.txt','r'):
-	        line = line.strip().split()
-	        address = line[0]
+        print("===== Started Running Ghidra Analysis On: " + project_name)
+        for line in open(project_directory + 'update_method_list.txt','r'):
+            line = line.strip().split()
+            address = line[0]
 
-	        print("========== Started Running Ghidra Analysis On: " + line[1])
-	        
-	        try:
-	      		subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1], shell=True)
-	        except:
-	        	pass
-	        	
-	        print("========== Finished Decompiling: " + line[1])
-	    print("===== Finished Running Ghidra Analysis On: " + project_name)
+            print("========== Started Running Ghidra Analysis On: " + line[1])
+            
+            try:
+                subprocess.run(analyzeHeadless + " " + ghidra_project_directory + " " + project_name + " -import " + abs_binary_path + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + project_directory+"/src_Ghidra_"+project_name+"/"+line[1], shell=True)
+            except:
+                pass
+
+            print("========== Finished Decompiling: " + line[1])
+        print("===== Finished Running Ghidra Analysis On: " + project_name)
 
 # This method makes a directory for every executable and will store Ghidra's analysis
 # of the method within this directory
