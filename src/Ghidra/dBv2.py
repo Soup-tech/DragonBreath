@@ -20,13 +20,6 @@ def main():
 
 		directory = directory + "dragonBreath/"
 
-	subprocess.Popen("mkdir " + directory+"bss", shell=True,stderr=subprocess.PIPE)
-	findBss(sys.argv[1], directory)
-
-	subprocess.Popen("mkdir " + directory+"data", shell=True, stderr=subprocess.PIPE)
-	findData(sys.argv[1], directory)
-
-	subprocess.Popen("mkdir " + directory+"text", shell=True, stderr=subprocess.PIPE)
 	findText(sys.argv[1], directory)
 
 def findText(binary, directory):
@@ -34,24 +27,8 @@ def findText(binary, directory):
 	bianry_path = binary.split("/")
 	binary_name = bianry_path[-1]
 
-	subprocess.Popen("objdump -t " + binary + " | grep -w .text > " + directory+"text/"+binary_name+".text",shell=True)
-	parseGhidra(directory+"text/"+binary_name+".text")
-
-
-
-def findData(binary, directory):
-	
-	bianry_path = binary.split("/")
-	binary_name = bianry_path[-1]
-
-	subprocess.Popen("objdump -t " + binary + " | grep -w .data > " + directory+"data/"+binary_name+".data",shell=True)
-
-def findBss(binary, directory):
-
-	bianry_path = binary.split("/")
-	binary_name = bianry_path[-1]
-
-	subprocess.Popen("objdump -t " + binary + " | grep -w .bss > " + directory+"bss/"+binary_name+".bss", shell=True)
+	subprocess.Popen("objdump -t " + binary + " | grep -w .text > " + directory+binary_name+".text",shell=True)
+	parseGhidra(directory+binary_name+".text")
 
 
 def parseGhidra(file_location):
