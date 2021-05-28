@@ -16,7 +16,7 @@ def main():
 		directory = sys.argv[1].split('/')
 		del directory[-1]
 		directory = ("/".join(directory)) + "/"
-		subprocess.Popen("mkdir " + directory+"dragonBreath", shell=True)
+		subprocess.Popen("mkdir " + directory+"dragonBreath", shell=True, stderr=subprocess.PIPE)
 
 		directory = directory + "dragonBreath/"
 
@@ -28,8 +28,6 @@ def main():
 
 	subprocess.Popen("mkdir " + directory+"text", shell=True, stderr=subprocess.PIPE)
 	findText(sys.argv[1], directory)
-
-	dragonBreath()
 
 def findText(binary, directory):
 
@@ -47,8 +45,6 @@ def findData(binary, directory):
 	binary_name = bianry_path[-1]
 
 	subprocess.Popen("objdump -t " + binary + " | grep -w .data > " + directory+"data/"+binary_name+".data",shell=True)
-	parseGhidra(directory+"data/"+binary_name+".data")
-
 
 def findBss(binary, directory):
 
@@ -57,21 +53,23 @@ def findBss(binary, directory):
 
 	subprocess.Popen("objdump -t " + binary + " | grep -w .bss > " + directory+"bss/"+binary_name+".bss", shell=True)
 
-	parseGhidra(directory+"bss/"+binary_name+".bss")
-
 
 def parseGhidra(file_location):
+
+	omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
 
 	temp_list = file_location.split("/")
 	file_name = temp_list[-1]
 	del temp_list[-1]
-	file_name = "/updated-"+file_name
 
-	method_directory = "/".join(temp_list) + "/ghidraOutput/"
+	method_directory = "/".join(temp_list) + "/dragonBreathOutput/"
 	subprocess.Popen("mkdir " + method_directory, shell=True, stderr=subprocess.PIPE)
 
 	for line in open(file_location,'r'):
 		line = line.strip().split()
+
+		if (line[-1] in omit):
+			continue
 
 		# formatting for Ghidra
 		address = line[0] + "1"
@@ -82,7 +80,8 @@ def parseGhidra(file_location):
 
 		# ./analyzeHeadless <project directory> <project name> -import <binary name> -postScript GhidraDecompiler.java <function address> -deleteProject
 		print("Running Analysis on " + line[-1] + "...")
-		subprocess.Popen(sys.argv[3] + " " + sys.argv[2] + " " + file_name + " -import " + sys.argv[1] + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject 2> /dev/null > " + method_directory+line[-1], shell=True)
+		subprocess.run(sys.argv[3] + " " + sys.argv[2] + " " + file_name + " -import " + sys.argv[1] + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + method_directory+line[-1] + " 2> /dev/null", shell=True)
+
 
 def createDirectory():
 	if ('-o' in sys.argv):
