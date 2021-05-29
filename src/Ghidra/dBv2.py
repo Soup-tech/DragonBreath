@@ -10,6 +10,7 @@ def main():
 		usage()
 		exit(1)
 
+	print("Creating directory...")
 	if (('-o' in sys.argv) or ('--output' in sys.argv)):
 		directory = createDirectory()
 	else:
@@ -27,18 +28,20 @@ def findText(binary, directory):
 	bianry_path = binary.split("/")
 	binary_name = bianry_path[-1]
 
+	print("Finding .text symbols...")
 	subprocess.Popen("objdump -t " + binary + " | grep -w .text > " + directory+binary_name+".text",shell=True)
 	parseGhidra(directory+binary_name+".text")
 
 
 def parseGhidra(file_location):
-
+	
 	omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
 
 	temp_list = file_location.split("/")
 	file_name = temp_list[-1]
 	del temp_list[-1]
 
+	print("Creating dragonBreathOutput directory...")
 	method_directory = "/".join(temp_list) + "/dragonBreathOutput/"
 	subprocess.Popen("mkdir " + method_directory, shell=True, stderr=subprocess.PIPE)
 
