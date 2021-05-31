@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+import time
 
 def main():
 
@@ -30,8 +31,23 @@ def findText(binary, directory):
 
 	print("Finding .text symbols...")
 	subprocess.Popen("objdump -t " + binary + " | grep -w .text > " + directory+binary_name+".text",shell=True)
+
+	time.sleep(2)
+
+	if (('-c' in sys.argv) or ('--continue' in sys.argv)):
+		print("Restoring save point...")
+		restore(directory+binary_name+".text")
+
 	parseGhidra(directory+binary_name+".text")
 
+def restore(text_file):
+
+	if ('-c' in sys.argv):
+		c_index = sys.argv.index('-c') + 1
+	elif ('--continue' in sys.argv):
+		c_index = sys.argv.index('--continue') + 1
+
+	subprocess.Popen("./restore.sh " + text_file + " " + sys.argv[c_index],shell=True)
 
 def parseGhidra(file_location):
 	
@@ -44,6 +60,8 @@ def parseGhidra(file_location):
 	print("Creating dragonBreathOutput directory...")
 	method_directory = "/".join(temp_list) + "/dragonBreathOutput/"
 	subprocess.Popen("mkdir " + method_directory, shell=True, stderr=subprocess.PIPE)
+
+	time.sleep(1)
 
 	for line in open(file_location,'r'):
 		line = line.strip().split()
@@ -76,10 +94,11 @@ def createDirectory():
 	return directory
 
 def usage():
-	print("USAGE: ./dBv2 [path/to/binary] [path/to/ghidra/project] [path/to/analyzeHeadless]\n" +
+	print("USAGE: ./dBv2 [path/to/binary] [path/to/ghidra/project] [path/to/analyzeHeadless] [OPTIONS]...[ -c | -o | -h]\n" +
 		  "OPTIONS:\n" +
 		  "\t-h --help\t: Display this usage message\n" +
-		  "\t-o --output\t: Write directory somewhere else\n")
+		  "\t-o --output\t: Write directory somewhere else\n"
+		  "\t-c --continue\t: Continue where dBv2 left off\n")
 
 
 
