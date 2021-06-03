@@ -5,40 +5,58 @@ import subprocess
 
 def main():
 
-	if (len(sys.argv) < 3):
+	if ((len(sys.argv) < 2) or ('-h' in sys.argv) or ('--help' in sys.argv)):
 		usage()
 		exit(1)
 
-	directory_list = pull_directory()
+	if (('-c' in sys.argv) or ('--compile' in sys.argv)):
+		runCompile(sys.argv[1])
+	elif (('-o' in sys.argv) or ('--output' in sys.argv)):
+		outputToDir(sys.argv[1])
+	elif (('-m' in sys.argv) or ('--make' in sys.argv)):
+		makeDirectory()
 
-	for folder in directory_list:
+def makeDirectory():
+	if (('-m' in sys.argv)):
+		m_index = sys.argv.index('-m') + 1
+	elif (('--make' in sys.argv)):
+		m_index = sys.argv.index('--make') + 1
+		
+	dirs = sys.argv[m_index].split(',')
+	for d in dirs:
+		subprocess.Popen("./create_folders.sh " + d,shell=True,stderr=subprocess.PIPE)
 
-		# make appropriate directories
-		mkdir_command = "mkdir " + sys.argv[1]+folder+'/src ' + sys.argv[1]+folder+'/Ghidra'	
-		subprocess.Popen(mkdir_command, shell=True, stderr=subprocess.PIPE)
+def outputToDir(vuldeepecker_directory):
+	# Find index
+	if ('-o' in sys.argv):
+		o_index = sys.argv.index('-o') + 1
+	elif ('--output' in sys.argv):
+		o_index = sys.argv.index('--output') + 1
 
-	
+	proc = subprocess.Popen("find " + vuldeepecker_directory + " -type f -executable",shell=True,stdout=subprocess.PIPE)
+	output = proc.stdout.read()
+	output = output.decode('utf-8')
 
-	
+	output = output.split('\n')
 
+	for ex in output:
+		ex = ex.strip().split('/')
+		del ex[-1]
+		ex = "/".join(ex)
+		
+		subprocess.Popen("mv " + ex + " " + sys.argv[o_index], shell=True, stderr=subprocess.PIPE)
 
-def pull_directory():
-	proc = subprocess.Popen("ls " + sys.argv[1], shell=True, stdout=subprocess.PIPE)
-	
-	directory = proc.stdout.read()
-
-	directory = directory.decode('utf-8')
-
-	dir_lst = directory.split('\n')
-	return dir_lst
+def runCompile(vuldeepecker_directory):
+	subprocess.Popen("./compile.sh " + vuldeepecker_directory, shell=True)
 
 
 def usage():
-	print("USAGE: ./vuldeepecker_analysis.py [path/to/vuldeepecker/]\n" +
-		  "OPTION:\n" +
-		  "-d : Create Directories\n" +
-		  "-c : Compile Files")
-
+	print("USAGE: ./vuldeepecker_analysis.py [path/to/vuldeepecker/] [OPTIONS]...[-c | -o | -h]\n" +
+		  "OPTIONS:\n" +
+		  "\t-h --help\t: Display this help message\n" +
+		  "\t-c --compile\t: Compile all possible files\n" +
+		  "\t-o --output\t: Output all successfully compiled files to a directory\n" +
+		  "\t-m --make\t: Make directory's in all folders")
 
 
 
