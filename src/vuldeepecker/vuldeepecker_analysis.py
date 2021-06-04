@@ -15,6 +15,51 @@ def main():
 		outputToDir(sys.argv[1])
 	elif (('-m' in sys.argv) or ('--make' in sys.argv)):
 		makeDirectory()
+	elif (('-d' in sys.argv) or ('--dragon' in sys.argv)):
+		dragon()
+
+
+def dragon():
+	omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
+
+	print("Finding executables...")
+	ex = subprocess.Popen("find " + sys.argv[1] + " -type f -executable",shell=True,stdout=subprocess.PIPE)
+	ex = ex.stdout.read().decode('utf-8')
+	ex = ex.split("\n")
+	
+	for e in ex:
+		# Binary Location
+		binary_location = e.strip()
+
+		# Ghidra home directory / binary name
+		e = e.strip().split('/')
+		dir_name = e[-2]
+		bin_name = e[-1]
+		del e[-1]
+		e = "/".join(e) + "/Ghidra/"
+		
+		print(" + Starting analysis on " + dir_name + "...")
+		text_file = e + "/"+bin_name+".text"
+		for method in open(text_file,'r'):
+			method = method.strip().split()
+
+			# Skipping over methods in omit
+			if (method[-1] in omit):
+				continue
+
+			# Ghidra Format
+			address = method[0] + "1"
+			address	= address.strip("0")
+			address = list(address)
+			del address[-1]
+			address = "".join(address)
+
+			# ./analyzeHeadless <project directory> <project name> -import <binary name> -postScript GhidraDecompiler.java <function address> -deleteProject
+			print("\t+ Analyzing " + method[-1])
+			subprocess.run("/opt/Ghidra/support/analyzeHeadless ~/HereBeDragons " + bin_name + " -import " + binary_location + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + e+"dragonBreathOutput/"+method[-1] + " 2> /dev/null", shell=True)
+
+
+
 
 def makeDirectory():
 	if (('-m' in sys.argv)):
@@ -24,7 +69,7 @@ def makeDirectory():
 		
 	dirs = sys.argv[m_index].split(',')
 	for d in dirs:
-		subprocess.Popen("./create_folders.sh " + d,shell=True,stderr=subprocess.PIPE)
+		subprocess.Popen("./create_folders.sh " + sys.argv[1] + " " + d,shell=True,stderr=subprocess.PIPE)
 
 def outputToDir(vuldeepecker_directory):
 	# Find index
@@ -56,7 +101,8 @@ def usage():
 		  "\t-h --help\t: Display this help message\n" +
 		  "\t-c --compile\t: Compile all possible files\n" +
 		  "\t-o --output\t: Output all successfully compiled files to a directory\n" +
-		  "\t-m --make\t: Make directory's in all folders")
+		  "\t-m --make\t: Make directory's in all folders\n" +
+		  "\t-d --dragon\t: Run Ghidra on all executables")
 
 
 

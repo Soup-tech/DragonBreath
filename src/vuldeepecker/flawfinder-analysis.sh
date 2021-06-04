@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# ./flawfinder-analysis [path/to/VulDeePacker/CWE-###/source_files/]
+# ./flawfinder-analysis [path/to/output]
 
 cd $1
 folder=$(ls)
 
 for dir in $folder
 do
-	cd $dir'/src'
+	cd $dir/src
 
 	mkdir flawfinder 2> /dev/null
 	echo Running flawfinder on $dir
