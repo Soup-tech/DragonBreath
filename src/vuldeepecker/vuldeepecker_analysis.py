@@ -17,6 +17,44 @@ def main():
 		makeDirectory()
 	elif (('-d' in sys.argv) or ('--dragon' in sys.argv)):
 		dragon()
+	elif (('-f' in sys.argv) or ('--format' in sys.argv)):
+		formatVul()
+
+def formatVul():
+	# Find directories contaning output files
+	files = []
+	print("Finding files....")
+	proc = subprocess.Popen("find " + sys.argv[1] + " -type d -name 'dragonBreathOutput'", shell=True, stdout=subprocess.PIPE)
+	output = proc.stdout.read().decode('utf-8')
+	output = output.split('\n')
+
+	for line in output:
+		line = line.strip()
+		
+		# Get all output files
+		ls = subprocess.Popen("ls " + line,shell=True,stdout=subprocess.PIPE)
+		try:
+			files = ls.stdout.read().decode('utf-8')
+			files = files.split('\n')
+		except:
+			continue
+
+		for f in files:
+			if (not f):
+				continue
+
+			# Formatting for output directory
+			output_dir = line.split('/')
+			name = output_dir[-3]
+			del output_dir[-1]
+			output_dir = "/".join(output_dir) + "/"
+
+			subprocess.Popen("mkdir " + output_dir+'src_Ghidra/' + " 2> /dev/null",shell=True)
+			print(" + Cleaning up " + name + "...")
+			try:
+				subprocess.Popen("./format-vul.sh " + line+'/'+f + " " + output_dir+'src_Ghidra/'+f+'.c' + " 2> /dev/null", shell=True)
+			except:
+				continue
 
 
 def dragon():

@@ -7,12 +7,12 @@ folder=$(ls)
 
 for dir in $folder
 do
-	cd $dir/src
+	cd $dir/Ghidra
 
 	mkdir flawfinder 2> /dev/null
 	echo Running flawfinder on $dir
-	flawfinder --context --columns --html . > flawfinder/results.html
-	flawfinder --csv . > flawfinder/results.csv
+	flawfinder --context --columns --html src_Ghidra > flawfinder/results.html
+	flawfinder --csv src_Ghidra > flawfinder/results.csv
 	
-	cd ../..
+	cd ../../
 done
