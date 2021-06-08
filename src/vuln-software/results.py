@@ -15,18 +15,25 @@ def main():
 	proj_name = projectName()
 	
 	outputFile = open(sys.argv[1]+proj_name+'.csv','w')
+	
 	for csv in csv_files:
+		if (not csv): # Empty string
+			continue
+		
+		source = csv.split('/')
+		source = source[-3]		
 
 		for line in open(csv,'r'):
 			if (line[:4] == "File"):
 				continue
 
-				source = line[0]
-				layer = line[3]
-				category = line[4]
-				method = line[5]
+			line = line.split(',')
 
-				outputFile.write(proj_name + "," + source + "," + layer + "," + category + "," + method + '\n')
+			layer = line[3]
+			category = line[4]
+			method = line[5]
+			
+			outputFile.write(proj_name + "," + source + "," + layer + "," + category + "," + method + '\n')
 
 	outputFile.close()
 
