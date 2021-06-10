@@ -12,7 +12,8 @@ def main():
 	
 	csv_id = ''
 	results = open('results.csv','w')
-
+	results.write("ProjectID,Source,Layer,Category,Method,Code\n"
+		)
 	csv_list = findFiles()
 
 	for csv in csv_list:
@@ -28,18 +29,22 @@ def main():
 				continue
 			
 			line = line.split(',')
+
 			layer = line[3]
 			category = line[4]
 			method = line[5]
+			context = parseContext(line)
 			context = line[-2]
 
-			print(line)
-			results.write(csv_id + "," + csv_src + "," + layer + "," + category + "," + method + "," + context + "\n")
+
+			# results.write(csv_id + "," + csv_src + "," + layer + "," + category + "," + method + "," + context + "\n")
 			
 
 	results.close()
 
 
+def parseContext(line):
+	print(line[-2])
 
 
 def findFiles():
