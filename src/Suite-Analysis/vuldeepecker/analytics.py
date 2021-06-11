@@ -12,39 +12,50 @@ def main():
 	
 	csv_id = ''
 	results = open('results.csv','w')
-	results.write("ProjectID,Source,Layer,Category,Method,Code\n"
-		)
+	results.write("ProjectID,Source,Layer,Category,Method,Code\n")
 	csv_list = findFiles()
 
 	for csv in csv_list:
-		csv_lst = csv.split('/')
+		if (not csv):
+			continue
 
+		csv_lst = csv.split('/')
 		# ProjectName
 		csv_id = csv_lst[-4]
 		# Source
 		csv_src = csv_lst[-3]
 		
+		print(" + Running on " + csv_id)
 		for line in open(csv,'r'):
 			if (line[:4] == 'File'):
 				continue
+			
+			context = parseContext(line)
+			if (context == None):
+				context = ''
 			
 			line = line.split(',')
 
 			layer = line[3]
 			category = line[4]
 			method = line[5]
-			context = parseContext(line)
-			context = line[-2]
 
-
-			# results.write(csv_id + "," + csv_src + "," + layer + "," + category + "," + method + "," + context + "\n")
+			results.write(csv_id + "," + csv_src + "," + layer + "," + category + "," + method + "," + context + "\n")
 			
 
 	results.close()
 
-
 def parseContext(line):
-	print(line[-2])
+	comma_split = line.split(",")
+
+	for i in range(len(comma_split) - 1, 0, -1):
+		 # Iterating backwards through the list until it hits something with CWE
+		 # Then rebuilds up the the signature
+		if ('CWE' in comma_split[i]):
+			context = comma_split[i+1:-1]
+			context = ",".join(context)
+			context = context.strip('"').strip()
+			return context
 
 
 def findFiles():
