@@ -80,6 +80,10 @@ def main():
 			outputFile.write(line + '\n')
 
 		outputFile.close()
+	else:
+		for line in fin_list:
+			print(line)
+		
 
 
 def usage():
