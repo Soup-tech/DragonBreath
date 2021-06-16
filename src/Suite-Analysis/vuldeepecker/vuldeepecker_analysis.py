@@ -140,7 +140,8 @@ def usage():
 		  "\t-c --compile\t: Compile all possible files\n" +
 		  "\t-o --output\t: Output all successfully compiled files to a directory\n" +
 		  "\t-m --make\t: Make directory's in all folders\n" +
-		  "\t-d --dragon\t: Run Ghidra on all executables")
+		  "\t-d --dragon\t: Run Ghidra on all executables\n" +
+		  "\t-f --format\t: Format Ghidra Ouput")
 
 
 
