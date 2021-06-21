@@ -53,7 +53,7 @@ def parseContext(line):
 			context = comma_split[i+1:-1]
 			context = ",".join(context)
 			context = context.strip('"').strip()
-			return context
+			return '"' + context + '"'
 
 
 

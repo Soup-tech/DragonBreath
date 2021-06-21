@@ -134,7 +134,7 @@ def runCompile(vuldeepecker_directory):
 
 
 def usage():
-	print("USAGE: ./vuldeepecker_analysis.py [path/to/vuldeepecker/] [OPTIONS]...[-c | -o | -h]\n" +
+	print("USAGE: ./suite-analysis.py [path/to/test/suite] [OPTIONS]...[ -c | -o | -m | -d | -f | -h ]\n" +
 		  "OPTIONS:\n" +
 		  "\t-h --help\t: Display this help message\n" +
 		  "\t-c --compile\t: Compile all possible files\n" +

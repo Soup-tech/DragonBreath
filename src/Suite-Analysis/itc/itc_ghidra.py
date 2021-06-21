@@ -2,7 +2,7 @@
 
 import subprocess
 import sys
-
+import time
 
 def main():
 	omit = ["deregister_tm_clones", "register_tm_clones","__do_global_dtors_aux","frame_dummy","__libc_csu_fini","__libc_csu_init","_start",".text"]
@@ -53,10 +53,11 @@ def main():
 			del address[-1]
 			address = "".join(address) # Real address for Ghidra
 
+			# Decompiling
+			time.sleep(2)
 			print("\t\t+ Decompiling " + method[-1])
 			subprocess.run("/opt/Ghidra/support/analyzeHeadless ~/HereBeDragons " + _id + " -import " + e + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + folder+"/Ghidra/dragonBreathOutput/"+method[-1] + " 2> /dev/null",shell=True)
-			#subprocess.run("/opt/Ghidra/support/analyzeHeadless ~/HereBeDragons " + bin_name + " -import " + binary_location + " -postScript GhidraDecompiler.java " + "10"+address + " -deleteProject > " + e+"dragonBreathOutput/"+method[-1] + " 2> /dev/null", shell=True)
-
+			
 
 
 def usage():
