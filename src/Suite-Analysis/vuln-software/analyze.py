@@ -18,14 +18,14 @@ def main():
 		for line in reversed(fin_list):
 			csv = line.split(',')
 			
-		# Get the source being filtered
-		if ('-s' in sys.argv):
-			s_index = sys.argv.index('-s') + 1
-		elif ('--source' in sys.argv):
-			s_index = sys.argv.index('--source') + 1
+			# Get the source being filtered
+			if ('-s' in sys.argv):
+				s_index = sys.argv.index('-s') + 1
+			elif ('--source' in sys.argv):
+				s_index = sys.argv.index('--source') + 1
 
-		if (sys.argv[s_index] != csv[1]):
-			fin_list.remove(line)
+			if (sys.argv[s_index] != csv[1]):
+				fin_list.remove(line)
 
 	if (('-l' in sys.argv) or ('--layer' in sys.argv)):
 		for line in reversed(fin_list):

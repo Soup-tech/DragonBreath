@@ -2,6 +2,7 @@
 # projectid, source (Ghidra,src,retdec), Layer, Category, Method, Code
 import subprocess
 import sys
+import time
 
 def main():
 
@@ -35,12 +36,12 @@ def main():
 				context = ''
 			
 			line = line.split(',')
-
 			layer = line[3]
 			category = line[4]
 			method = line[5]
 
 			results.write(csv_id + "," + csv_src + "," + layer + "," + category + "," + method + "," + context + "\n")
+			time.sleep(1)
 			
 
 	results.close()
@@ -59,7 +60,7 @@ def parseContext(line):
 
 
 def findFiles():
-	proc = subprocess.Popen("find " + sys.argv[1] + " -type f -name 'results.csv'", shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen("find " + sys.argv[1] + " -type f -name 'results.csv' | sort", shell=True, stdout=subprocess.PIPE)
 	csv_files = proc.stdout.read().decode('utf-8')
 	csv_files = csv_files.split('\n')
 
