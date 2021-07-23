@@ -1,10 +1,6 @@
-
-#@Maximillian 
-#@category _NEW_
-#@keybinding 
-#@menupath 
-#@toolbar 
-
+#######################################
+# Created by Maximillian A. Campbell ##
+#######################################
 # ======= Intro =======
 print("""                              ______________                               
                         ,===:'.,            `-._                           
@@ -35,7 +31,7 @@ program = getCurrentProgram()
 ifc = DecompInterface()
 
 # Output Directory
-OUTPUT_DIR = "/home/maximillian/Downloads/dragonBreath/" # Change me!
+OUTPUT_DIR = "/tmp" # Change me!
 
 # ======= Functions ======
 def decompileFunction(function):
