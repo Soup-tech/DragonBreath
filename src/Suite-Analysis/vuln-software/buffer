@@ -1,0 +1,27 @@
+#!/bin/bash
+
+cd /home/hades/Downloads/vuln-software
+vuln_software=$(ls)
+
+for dir in $vuln_software
+do
+	cd $dir
+
+	# Make directory
+	mkdir buffer 2> /dev/null
+	
+	# Get csv file
+	csv=$(ls *.csv)
+
+	# Run analyze
+	/home/hades/Documents/repos/DragonBreath/src/Suite-Analysis/vuln-software/analyze.py $csv -c buffer >> /home/hades/Downloads/vuln-software/Overall/buffer/buffer.csv
+	/home/hades/Documents/repos/DragonBreath/src/Suite-Analysis/vuln-software/analyze.py $csv -c buffer -m char >> /home/hades/Downloads/vuln-software/Overall/buffer/char_only.csv
+	
+	cd buffer
+		diff char_only.csv buffer.csv > diff.csv
+		while read line; do cut -d ' ' -f 2 | grep $dir >> /home/hades/Downloads/vuln-software/Overall/buffer/wo_char.csv; done < diff.csv
+		rm diff.csv
+	cd ..
+
+	cd ..
+done

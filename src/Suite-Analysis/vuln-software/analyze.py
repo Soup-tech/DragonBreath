@@ -93,7 +93,7 @@ def usage():
 		  "\t-l --layer\t: Filter By Layer\n" +
 		  "\t-c --category\t: Filter By Category\n" +
 		  "\t-m --method\t: Filter By Method\n" +
-		  "\t-o --output\t: Write to a File")
+		  "\t-o --output\t: Write to a File\n")
 
 
 
