@@ -1,23 +1,22 @@
 <html>
   <header>
     <h1>DragonBreath</h1>
-    <h2>Mass Decompiling Executables Using Ghidra</h2>
+    <h2>NASA SRE Research Project</h2>
     <img src='assets/Dracarys.gif' width='100%'>
-    <h3>This repository is the amalgamation of all the scripts I have developed while working for the NASA Reverse Engineering Study. This includes small programs that generate thousands of lines of source code from various decompilers to compiling hundreds of binaries in a test-suites.</h3>
+    <h3>This repository is the compilation of all the scripts I have developed while working for the NASA Reverse Engineering Study.</h3>
+    <h3><i>"It simply isn't an adventure worth telling if there aren't any dragons."<br>- J.R.R Tolkien</i></h3>
   </header>
   
   <body>
     <!-- Table of Contents -->
     <h1>Table of Contents</h1>
     <ul>
-      <li><h3><a href="Decompilers">Decompilers</a></h3></li>
-      <li><h3><a href="Static-Analysis-Tools">Static Analysis Tools</a></h3></li>
-      <li><h3><a href="Suite-Analysis">Suite-Analysis</a></h3></li>
+      <li><h3><a href="DragonBreath">DragonBreath</a></h3></li>
+      <li><h3><a href="Smaug">Smaug</a></h3></li>
     </ul>
-    <h2><a id="Decompilers">Decompilers</a></h2>
-    <h3>Ghidra</h3>
-    <h4>dragonBreath</h4>
-    <p>This script decompiles all the functions in the executable that is currently loaded into Ghidra. Place the script in the ghidra_scripts directory. Change the OUTPUT_DIR variable to where you would like to write all the source files to and run.</p>
+    <h2><a id="DragonBreath">DragonBreath</a></h2>
+    <p>The best (and my personal favorite) script that was written for this research project. DragonBreath collects all the decompiled code contained within an application.</p>
+    <p>This script decompiles all the functions in the executable that is currently loaded into Ghidra. Place the script in the ghidra_scripts directory. Change the OUTPUT_DIR variable to where you would like to write all the source files to and run the script.</p>
     <code><p>Example Output from Aeon 0.2a</p></code>
     <pre>
 dragonBreath.py> Running...
@@ -69,6 +68,9 @@ Art by                       `:.`---.__         `-._
 [+] Decompiling: _ITM_registerTMCloneTable @ 0x00107120
 dragonBreath.py> Finished!
     </pre>
+    
+    
+    
   </body>
-  
+  <h2><a id="Smaug">Smaug</a>
 </html>
