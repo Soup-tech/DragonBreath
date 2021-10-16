@@ -1,8 +1,0 @@
-#!/usr/bin/python3
-
-# ======= Modules =======
-from com.pnfsoftware.jeb.client.api import IScript
-
-class Decompile(IScript):
-	def run(self, ctx):
-		print("Hello, JEB version {}".format(ctx.getSoftwareVersion()))
