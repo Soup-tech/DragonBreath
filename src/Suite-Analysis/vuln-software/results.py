@@ -14,11 +14,12 @@ def main():
 	csv_files = csv_files.split('\n')
 
 	proj_name = projectName()
-	
+
 	outputFile = open(sys.argv[1]+proj_name+'.csv','w')
-	outputFile.write("Project Name,Source,Layer,Category,Method\n")
+	outputFile.write("Project Name,Source,Layer,Category,Method,Context\n")
 
 	for csv in csv_files:
+		
 		if (not csv): # Empty string
 			continue
 		
@@ -33,6 +34,9 @@ def main():
 			if (context == None):
 				context = ''
 			line = line.split(',')
+			
+			if (len(line) < 6):
+				continue
 
 			layer = line[3]
 			category = line[4]
@@ -55,16 +59,11 @@ def parseContext(line):
 			context = context.strip('"').strip()
 			return '"' + context + '"'
 
-
-
-
 def projectName():
 	proj_name = sys.argv[1].split('/')
 	proj_name = proj_name[-2]
 	return proj_name
-	 
-
-
+	
 def usage():
 	print("USAGE: ./results.py [path/to/completed/directory]")
 
