@@ -23,9 +23,9 @@ for line in open(argv[1],'r'):
 	else:
 		hits[project][src][severity] += 1
 
-for proj,src in hits.items():
-	print("Project: {}".format(proj))
-	for decomp,sev in src.items():
-		print("\t{}".format(decomp))
-		for num,count in sev.items():
-			print("\t\t{}: {}".format(num,count))
+
+for proj, src in hits.items():
+	for decomp,cat in src.items():
+		for num,count in cat.items():
+			print("{},{},{}".format(proj,num,count))
+
