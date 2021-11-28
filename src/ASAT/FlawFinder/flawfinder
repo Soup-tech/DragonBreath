@@ -875,11 +875,30 @@ def normal(hit):
 # http://msdn.microsoft.com/en-us/library/bb288454.aspx
 
 c_ruleset = {
+    "__strcpy_chk":
+    (c_buffer, 4,
+     "Decompiled version of strcpy.",
+     "It is very likely that this was a vulnerable strcpy in the original source code.",
+     "buffer","",{}),
+
+    "__sprintf_chk":
+    (c_buffer, 4,
+     "Decompiled version of snprintf.",
+     "It is very likely that this was a vulnerable sprintf in the original source code",
+     "buffer","",{}),
+
+    "__syslog_chk":
+    (c_printf, 4,
+     "Decompiled version of syslog",
+     "It is very likely that this was a vulnerable syslog in the original source code",
+     "format", "", {'format_position': 2}),
+
     "strcpy":
     (c_buffer, 4,
      "Does not check for buffer overflows when copying to destination [MS-banned] (CWE-120)",
      "Consider using snprintf, strcpy_s, or strlcpy (warning: strncpy easily misused)",
      "buffer", "", {}),
+
     "strcpyA|strcpyW|StrCpy|StrCpyA|lstrcpyA|lstrcpyW|_tccpy|_mbccpy|_ftcscpy|_mbsncpy|StrCpyN|StrCpyNA|StrCpyNW|StrNCpy|strcpynA|StrNCpyA|StrNCpyW|lstrcpynA|lstrcpynW":
     # We need more info on these functions; I got their names from the
     # Microsoft "banned" list.  For now, just use "normal" to process them
@@ -888,21 +907,25 @@ c_ruleset = {
      "Does not check for buffer overflows when copying to destination [MS-banned] (CWE-120)",
      "Consider using snprintf, strcpy_s, or strlcpy (warning: strncpy easily misused)",
      "buffer", "", {}),
+
     "lstrcpy|wcscpy|_tcscpy|_mbscpy":
     (c_buffer, 4,
      "Does not check for buffer overflows when copying to destination [MS-banned] (CWE-120)",
      "Consider using a function version that stops copying at the end of the buffer",
      "buffer", "", {}),
+
     "memcpy|CopyMemory|bcopy":
     (c_memcpy, 2,  # I've found this to have a lower risk in practice.
      "Does not check for buffer overflows when copying to destination (CWE-120)",
      "Make sure destination can always hold the source data",
      "buffer", "", {}),
+
     "strcat":
     (c_buffer, 4,
      "Does not check for buffer overflows when concatenating to destination [MS-banned] (CWE-120)",
      "Consider using strcat_s, strncat, strlcat, or snprintf (warning: strncat is easily misused)",
      "buffer", "", {}),
+    
     "lstrcat|wcscat|_tcscat|_mbscat":
     (c_buffer, 4,
      "Does not check for buffer overflows when concatenating to destination [MS-banned] (CWE-120)",
@@ -914,32 +937,7 @@ c_ruleset = {
      "Does not check for buffer overflows when concatenating to destination [MS-banned] (CWE-120)",
      "",
      "buffer", "", {}),
-    "strncpy":
-    (c_buffer,
-     1,  # Low risk level, because this is often used correctly when FIXING security
-     # problems, and raising it to a higher risk level would cause many false
-     # positives.
-     "Easily used incorrectly; doesn't always \\0-terminate or "
-     "check for invalid pointers [MS-banned] (CWE-120)",
-     "",
-     "buffer", "", {}),
-    "lstrcpyn|wcsncpy|_tcsncpy|_mbsnbcpy":
-    (c_buffer,
-     1,  # Low risk level, because this is often used correctly when FIXING security
-     # problems, and raising it to a higher risk levle would cause many false
-     # positives.
-     "Easily used incorrectly; doesn't always \\0-terminate or "
-     "check for invalid pointers [MS-banned] (CWE-120)",
-     "",
-     "buffer", "", {}),
-    "strncat":
-    (c_strncat,
-     1,  # Low risk level, because this is often used correctly when
-     # FIXING security problems, and raising it to a
-     # higher risk level would cause many false positives.
-     "Easily used incorrectly (e.g., incorrectly computing the correct maximum size to add) [MS-banned] (CWE-120)",
-     "Consider strcat_s, strlcat, snprintf, or automatically resizing strings",
-     "buffer", "", {}),
+
     "lstrcatn|wcsncat|_tcsncat|_mbsnbcat":
     (c_strncat,
      1,  # Low risk level, because this is often used correctly when FIXING security
@@ -948,18 +946,12 @@ c_ruleset = {
      "Easily used incorrectly (e.g., incorrectly computing the correct maximum size to add) [MS-banned] (CWE-120)",
      "Consider strcat_s, strlcat, or automatically resizing strings",
      "buffer", "", {}),
+
     "strccpy|strcadd":
     (normal, 1,
      "Subject to buffer overflow if buffer is not as big as claimed (CWE-120)",
      "Ensure that destination buffer is sufficiently large",
      "buffer", "", {}),
-    "char|TCHAR|wchar_t":  # This isn't really a function call, but it works.
-    (c_static_array, 2,
-     "Statically-sized arrays can be improperly restricted, "
-     "leading to potential overflows or other issues (CWE-119!/CWE-120)",
-     "Perform bounds checking, use functions that limit length, "
-     "or ensure that the size is larger than the maximum possible length",
-     "buffer", "", {'extract_lookahead': 1}),
 
     "gets|_getts":
     (normal, 5, "Does not check for buffer overflows (CWE-120, CWE-20)",
@@ -1013,17 +1005,6 @@ c_ruleset = {
      "Specify a limit to %s, or use a different input function",
      "buffer", "", {'input': 1, 'format_position': 2}),
 
-    "strlen|wcslen|_tcslen|_mbslen":
-    (normal,
-     # Often this isn't really a risk, and even when it is, at worst it
-     # often causes a program crash (and nothing worse).
-     1,
-     "Does not handle strings that are not \\0-terminated; "
-     "if given one it may perform an over-read (it could cause a crash "
-     "if unprotected) (CWE-126)",
-     "",
-     "buffer", "", {}),
-
     "MultiByteToWideChar":  # Windows
     (c_multi_byte_to_wide_char,
      2,  # Only the default - this will be changed in many cases.
@@ -1065,13 +1046,6 @@ c_ruleset = {
      "Use getcwd instead",
      "buffer", "dangers-c", {'input': 1}),
 
-    # fread not included here; in practice I think it's rare to mistake it.
-    "getchar|fgetc|getc|read|_gettc":
-    (normal, 1,
-     "Check buffer boundaries if used in a loop including recursive loops (CWE-120, CWE-20)",
-     "",
-     "buffer", "dangers-c", {'input': 1}),
-
     "access":        # ???: TODO: analyze TOCTOU more carefully.
     (normal, 4,
      "This usually indicates a security flaw.  If an "
@@ -1082,30 +1056,35 @@ c_ruleset = {
      "try to open the file directly",
      "race",
      "avoid-race#atomic-filesystem", {}),
+
     "chown":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
      "can move those files, a race condition results. (CWE-362)",
      "Use fchown( ) instead",
      "race", "", {}),
+
     "chgrp":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
      "can move those files, a race condition results. (CWE-362)",
      "Use fchgrp( ) instead",
      "race", "", {}),
+
     "chmod":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
      "can move those files, a race condition results. (CWE-362)",
      "Use fchmod( ) instead",
      "race", "", {}),
+
     "vfork":
     (normal, 2,
      "On some old systems, vfork() permits race conditions, and it's "
      "very difficult to use correctly (CWE-362)",
      "Use fork() instead",
      "race", "", {}),
+
     "readlink":
     (normal, 5,
      "This accepts filename arguments; if an attacker "
@@ -1122,6 +1101,7 @@ c_ruleset = {
      "Function tmpfile() has a security flaw on some systems (e.g., older System V systems) (CWE-377)",
      "",
      "tmpfile", "", {}),
+
     "tmpnam|tempnam":
     (normal, 3,
      "Temporary file race condition (CWE-377)",
