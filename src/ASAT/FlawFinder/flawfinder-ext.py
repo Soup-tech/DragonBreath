@@ -6,6 +6,7 @@ import subprocess
 
 argv = sys.argv
 
+### Structures
 # {method: {name: {source_context: [{probability:decomp_info},{probability:decomp_info},...] } } }
 hit_list = {}
 
@@ -437,7 +438,7 @@ def batchAverage():
 
 def buildLocalityStruct():
 
-	# {method:}
+	# {method: {source_uid: [source_information]} }
 	return
 
 def localityAverage():
