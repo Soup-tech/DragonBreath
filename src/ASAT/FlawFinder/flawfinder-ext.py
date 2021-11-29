@@ -9,16 +9,22 @@ argv = sys.argv
 ### Structures
 # {method: {name: {source_context: [{probability:decomp_info},{probability:decomp_info},...] } } }
 hit_list = {}
+# source_line_information = {uid:[hit_line,beginning_line,end_line],uid:[hit_line,beginning_line,end_line] }
+source_line_information = {}
 
 ### Switches
 ## Display debugging information for the source data
 debug_build = False
 ## Display debugging information for the decompiled data
 debug_batch = False
+## Display debugging infromation for the locality data structures
+debug_locality = False
 
 ### Coefficients
-# Creat a weighted average. Default = 1
+# Weighted average for batching. Default = 1
 batch_coefficient = 1
+# Weighted average for locality. Default = 
+locality_coefficient = 1
 
 def error(msg):
 	"""
@@ -45,6 +51,8 @@ def parseArgs():
 	"""
 	global debug_build
 	global debug_batch
+	global debug_locality
+
 	if (len(argv) < 3):
 		error("Not enough parameters\n"
 			  "Usage: ./flawfinder-ext.py [path/to/source/top_level_directory] [path/to/decompiler/top_level_directory]")
@@ -57,15 +65,17 @@ def parseArgs():
 	isDirecotry(source_directory)
 
 	if ('--debug' in argv):
-		# See debug information for source, decomp, or both
+		# See debug information
 		debug_index = getUsableSwitchInfo('--debug')
 		try:
 			if (argv[debug_index] == 'build'):
 				debug_build = True
 			elif (argv[debug_index] == 'batch-average'):
 				debug_batch = True
+			elif (argv[debug_index] == 'locality'):
+				debug_locality = True
 		except:
-			error("Supply debugging option: 'build', 'batch-average'")
+			error("Supply debugging option: 'build', 'batch-average', 'locality'")
 
 	return
 
@@ -340,8 +350,8 @@ def buildAverageStruct():
 		if (source_name not in hit_list[source_method].keys()):
 			hit_list[source_method][source_name] = {}
 
-		if (source_context not in hit_list[source_method][source_name].keys()):
-			hit_list[source_method][source_name][source_context] = []
+		if (source_uid not in hit_list[source_method][source_name].keys()):
+			hit_list[source_method][source_name][source_uid] = []
 		
 		for line in open('decomp_compiled.csv','r'):
 			if ('File,Method' in line):
@@ -354,32 +364,25 @@ def buildAverageStruct():
 			decomp_name = line.strip().split(',')[5]
 			decomp_uid = line.strip().split(',')[-1]
 
-			decomp_context = ",".join(line.strip().split(',')[6:-1])
+			decomp_context = (",".join(line.strip().split(',')[6:-1])).split('\t')[0]
 			decomp_info = {}
 
 			if (decomp_method in hit_list.keys() and decomp_method == source_method):
 				if (decomp_name in hit_list[source_method].keys() and decomp_name == source_name):
-
-					# info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid]
-					decomp_info[100] = decomp_context
-					hit_list[source_method][source_name][source_context].append(decomp_info)
+					info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid]
+					decomp_info[100] = info
+					hit_list[source_method][source_name][source_uid].append(decomp_info)
 			
 	if (debug_build):
 		for method,name_info in hit_list.items():
 			print(f"[+] Method: {method}")
 			for name,source_info in name_info.items():
 				print(f"\t[+] Name: {name}")
-				for source_context,probability_list in source_info.items():
-					print(f"\t\t[+] Source Context: {source_context}")
+				for source_uid,probability_list in source_info.items():
+					print(f"\t\t[+] Source UID: {source_uid}")
 					for d in probability_list:
 						print(f"\t\t\t[+] {d}")
 	
-	return
-
-def buildLocalityStruct():
-	"""
-	Creates and stores information about the locality of each hit
-	"""
 	return
 
 def batchAverage():
@@ -398,8 +401,8 @@ def batchAverage():
 			print(f"[+] Method: {method}")
 			for name,source_info in name_info.items():
 				print(f"\t[+] Name: {name}")
-				for source_context,probability_list in source_info.items():
-					print(f"\t\t[+] Source Context: {source_context}")
+				for source_uid,probability_list in source_info.items():
+					print(f"\t\t[+] Source UID: {source_uid}")
 
 					try:
 						batch_probability = (100 / len(probability_list)) * batch_coefficient
@@ -410,16 +413,16 @@ def batchAverage():
 					
 					for i in range(len(probability_list)):
 
-						hit_list[method][name][source_context][i][batch_probability] = hit_list[method][name][source_context][i][100]
+						hit_list[method][name][source_uid][i][batch_probability] = hit_list[method][name][source_uid][i][100]
 						
 						if (batch_probability != 100):
-							del hit_list[method][name][source_context][i][100]
+							del hit_list[method][name][source_uid][i][100]
 						
-						print(f"\t\t\t[+] Decomp: {hit_list[method][name][source_context][i]}")
+						print(f"\t\t\t[+] Decomp: {hit_list[method][name][source_uid][i]}")
 	else: # There must be a better way to do this
 		for method,name_info in hit_list.items():
 			for name,source_info in name_info.items():
-				for source_context,probability_list in source_info.items():
+				for source_uid,probability_list in source_info.items():
 
 					try:
 						batch_probability = (100 / len(probability_list)) * batch_coefficient
@@ -429,16 +432,42 @@ def batchAverage():
 
 					for i in range(len(probability_list)):
 
-						hit_list[method][name][source_context][i][batch_probability] = hit_list[method][name][source_context][i][100]
+						hit_list[method][name][source_uid][i][batch_probability] = hit_list[method][name][source_uid][i][100]
 						
 						if (batch_probability != 100):
-							del hit_list[method][name][source_context][i][100]
+							del hit_list[method][name][source_uid][i][100]
 
 	return
 
 def buildLocalityStruct():
+	# source_line_information = {uid:[hit_line,beginning_line,end_line],uid:[hit_line,beginning_line,end_line]}
+	global source_line_information
+	global debug_locality
 
-	# {method: {source_uid: [source_information]} }
+	# Populate the source_line_information
+	for line in open('source_compiled.csv','r'):
+		if ('File,Method' in line):
+			continue
+
+		source_info = []
+
+		source_beg_line = line.strip().split(',')[2]
+		source_fin_line = line.strip().split(',')[3]
+		source_hit_line = line.strip().split(',')[4]
+		source_uid = line.strip().split(',')[-1]
+
+		source_info = [source_hit_line,source_beg_line,source_fin_line]
+		if (source_uid not in source_line_information):
+			source_line_information[source_uid] = source_info
+
+	if (debug_locality):
+		for uid,info in source_line_information.items():
+			print(f"[+] UID: {uid}")
+			print(f"\t[+] Hit Line: {info[0]}")
+			print(f"\t[+] Beginning Line: {info[1]}")
+			print(f"\t[+] End Line: {info[2]}")
+
+				
 	return
 
 def localityAverage():
@@ -446,6 +475,62 @@ def localityAverage():
 	Bases the probability of a decompiled hit to the source code based on 
 	the locality of where the hit was found
 	"""
+	# source_line_information = {uid:[hit_line,beginning_line,end_line],uid:[hit_line,beginning_line,end_line] }
+	global source_line_information
+	
+	# {method: {name: {source_context: [{probability:decomp_info},{probability:decomp_info},...] } } }
+	# decomp_info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid]
+	global hit_list
+
+	# Find the corresponding context to every 
+	for uid,info in source_line_information.items():
+
+		# Search for line that has the wanted UID
+		for line in open('source_compiled.csv','r'):
+			if ("File,Method" in line):
+				continue
+
+			source_uid = line.strip().split(',')[-1]
+			source_method = line.strip().split(',')[1]
+			source_name = line.strip().split(',')[5]
+			source_context = (",".join(line.strip().split(',')[6:-1])).split('\t')[0]
+
+			if (uid == source_uid):
+				# Re-adjust lines in source to make locality simpler
+				source_beg_line = int(source_line_information[uid][1])
+
+				source_hit_line = int(source_line_information[uid][0]) - source_beg_line
+				source_end_line = int(source_line_information[uid][2]) - source_beg_line
+				source_beg_line = source_beg_line - source_beg_line
+
+				print(f"[+] Source: {source_context}")
+				print(f"\t\t[+] Adjusted Hit Line: {source_hit_line}")
+				print(f"\t\t[+] Adjusted Beginning Line: {source_beg_line}")
+				print(f"\t\t[+] Adjusted End Line: {source_end_line}")
+				print("")
+
+				# Get corresponding potential hits from decompiler
+				for pot_hit in hit_list[source_method][source_name][source_uid]:
+					
+					for prob,decomp_info in pot_hit.items():
+						# Re-adjust lines in decompiler to make locality simpler
+
+						# The -1 here is because the beginning line in all decompiled source code is off by 1.
+						# I have no idea why but I'm accounting for hit here. This 'off-by-one' thing is not a big
+						# deal but could cause some problems potentially somewhere down the line
+						decompile_beg_line = int(decomp_info[2]) - 1 
+
+						decompile_hit_line = int(decomp_info[1]) - decompile_beg_line
+						decompile_end_line = int(decomp_info[3]) - decompile_beg_line
+						decompile_beg_line = decompile_beg_line - decompile_beg_line
+
+						print(f"\t[+] Decompiled: {decomp_info[0]}")
+						print(f"\t\t[+] Adjusted Hit Line: {decompile_hit_line}")
+						print(f"\t\t[+] Adjusted Beginning Line: {decompile_beg_line}")
+						print(f"\t\t[+] Adjusted End Line: {decompile_end_line}")
+						print("")
+
+					
 	return
 
 def multiStagedAnalysis():
@@ -455,11 +540,11 @@ def multiStagedAnalysis():
 	"""
 	## Custome structures to help with determining probability
 	buildAverageStruct()
-	buildLocalityStruct()
+	# buildLocalityStruct()
 
 	## Actual averaging down here
 	batchAverage()
-	localityAverage()
+	# localityAverage()
 
 
 def main():
