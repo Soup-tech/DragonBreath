@@ -450,13 +450,14 @@ def buildLocalityStruct():
 			continue
 
 		source_info = []
-
+		source_file = line.strip().split(',')[0]
+		source_method = line.strip().split(',')[1]
 		source_beg_line = line.strip().split(',')[2]
 		source_fin_line = line.strip().split(',')[3]
 		source_hit_line = line.strip().split(',')[4]
 		source_uid = line.strip().split(',')[-1]
 
-		source_info = [source_hit_line,source_beg_line,source_fin_line]
+		source_info = [source_hit_line,source_beg_line,source_fin_line,source_file,source_method]
 		if (source_uid not in source_line_information):
 			source_line_information[source_uid] = source_info
 
@@ -533,6 +534,63 @@ def localityAverage():
 					
 	return
 
+def getParams():
+	param_list = []
+	
+	
+	return
+
+def paramSizeAverage():
+	"""
+	Calculates the likelihood of each potential decompile hit based on whether the 
+	buffer for the parameters are the same size in both the source code and the 
+	decompiled code
+	"""
+
+	# {method: {name: {source_uid: [{probability:decomp_info},{probability:decomp_info},...] } } }
+	# decomp_info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid]
+	global hit_list
+
+	# source_line_information = {uid:[hit_line,beginning_line,end_line,file],uid:[hit_line,beginning_line,end_line,file] }
+	global source_line_information
+
+	source_compiled = open('source_compiled.csv','r').readlines()
+	decompile_compiled = open('decomp_compiled.csv','r').readlines()
+
+	# First determine the the buffer size in the parameter(s) of the source code
+	# Only have to look within the method
+	for method,name in hit_list.items():
+		for name,source_context in name.items():
+			for uid,decomp_hits in source_context.items():
+
+				# Have corresponding uid for both hit_list and source_line_information
+				method_start = int(source_line_information[uid][1])
+				method_end = int(source_line_information[uid][2])
+				source_file = source_line_information[uid][3]
+				method_name = source_line_information[uid][4]
+
+				# Get the context for the source hit
+				param_list = []
+				for line in source_compiled:
+					source_uid = line.strip().split(',')[-1]
+					if (uid == source_uid):
+						source_context = (",".join(line.strip().split(',')[6:-1])).split('\t')[0]
+						param_list = getParams(source_context)
+
+
+				f = open(source_file,'r').readlines()
+				ref_line = method_start
+				while (ref_line != method_end):
+					
+					print(f[ref_line].strip())
+					ref_line += 1
+
+
+
+
+	return
+
+
 def multiStagedAnalysis():
 	"""
 	Entry point method for analysis. Remove or append custom methods to determine the 
@@ -540,11 +598,13 @@ def multiStagedAnalysis():
 	"""
 	## Custome structures to help with determining probability
 	buildAverageStruct()
-	# buildLocalityStruct()
+	buildLocalityStruct()
 
 	## Actual averaging down here
 	batchAverage()
-	# localityAverage()
+	#localityAverage()
+
+	paramSizeAverage()
 
 
 def main():
