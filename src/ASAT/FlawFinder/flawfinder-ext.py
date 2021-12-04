@@ -3,14 +3,46 @@
 import sys
 import os
 import subprocess
+import string
+import re
 
 argv = sys.argv
+
+# List of all methods being scanned for (currently). Helps with handling parameters
+method_list = ["__strcpy_chk",
+			   "__sprintf_chk",
+			   "__syslog_chk",
+			   "strcpy",
+			   "memcpy",
+			   "strcat",
+			   "gets",
+			   "sprintf",
+			   "printf",
+			   "syslog",
+			   "scanf",
+			   "fscanf",
+			   "getopt",
+			   "chown",
+			   "chmod",
+			   "vfork",
+			   "readlink",
+			   "tmpfile",
+			   "mktemp",
+			   "fopen",
+			   "umask",
+			   "chroot"]
 
 ### Structures
 # {method: {name: {source_context: [{probability:decomp_info},{probability:decomp_info},...] } } }
 hit_list = {}
 # source_line_information = {uid:[hit_line,beginning_line,end_line],uid:[hit_line,beginning_line,end_line] }
 source_line_information = {}
+# source_hit_buffer_sizes = {uid:{parameter_name:size/type,parameter_name:size/type,...}}
+source_hit_buffer_sizes = {}
+# {directive_name:amount}
+known_directives = {}
+# decompile_hit_buffer_sizes = {uid:{parameter_name:size/type,paramter_name:size/type,...}}
+decompile_hit_buffer_sizes = {}
 
 ### Switches
 ## Display debugging information for the source data
@@ -19,12 +51,24 @@ debug_build = False
 debug_batch = False
 ## Display debugging infromation for the locality data structures
 debug_locality = False
+## Display debugging information for parameter searching
+debug_parameter = False
+## Display debugging information for parameter average technique
+debug_parameter_average = False
 
 ### Coefficients
 # Weighted average for batching. Default = 1
 batch_coefficient = 1
-# Weighted average for locality. Default = 
+# Weighted average for locality. Default = 1
 locality_coefficient = 1
+# Weighted avearge for equivalent parameters and sizes. 
+name_and_size_coefficient = 0.5
+# Weight average for equivalent names. 
+name_coefficient = 0.25
+# Weighted average for equivelent sizes. 
+size_coefficient = 0.25
+# Weighted average when nothing is equivalent. 
+none_coefficient = 0.15
 
 def error(msg):
 	"""
@@ -52,6 +96,8 @@ def parseArgs():
 	global debug_build
 	global debug_batch
 	global debug_locality
+	global debug_parameter
+	global debug_parameter_average
 
 	if (len(argv) < 3):
 		error("Not enough parameters\n"
@@ -72,10 +118,12 @@ def parseArgs():
 				debug_build = True
 			elif (argv[debug_index] == 'batch-average'):
 				debug_batch = True
-			elif (argv[debug_index] == 'locality'):
-				debug_locality = True
+			elif (argv[debug_index] == "parameter"):
+				debug_parameter = True
+			elif (argv[debug_index] == "parameter-average"):
+				debug_parameter_average = True
 		except:
-			error("Supply debugging option: 'build', 'batch-average', 'locality'")
+			error("Supply debugging option: 'build', 'batch-average', 'parameter','parameter-average'")
 
 	return
 
@@ -103,7 +151,20 @@ def parseMethod(line):
 	"""
 	Parse the method into the name
 	"""
-	method_name = line.split('(')[0].split()[1]
+	ref_space = 0
+	ref_paran = 0
+	for count,char in enumerate(line):
+		
+		# Save the last instance of the space
+		if (char == ' '):
+			ref_space = count
+
+		# Found the first paranthesis of the method line
+		if (char == '(' and ref_space != 0):
+			ref_paran = count
+			break
+	method_name = line[ref_space + 1:ref_paran]
+	
 	return method_name
 
 def methodFile(c_source,method_file):
@@ -144,20 +205,20 @@ def methodFile(c_source,method_file):
 			# then iterating backwards until a line with something is found on it.
 			pointer = ref_line_beginning
 			while True:
-
-				# Curly brace and carriage return
-				if (len(c_file[pointer]) > 3 and '(' in c_file[pointer]):
+				line = c_file[pointer].strip()
+				
+				if ('(' in line):
 					break
 				else:
 					pointer -= 1
-
+					
 			method_line = c_file[pointer].strip()
 			# DEBUG line
 			#print(f"Method line: {method_line}; Beginning curly: {ref_line_beginning}, File: {c_source}, Length of Line: {len(c_file[pointer])}")
 
 			method_name = parseMethod(method_line)
 
-			csv_line = f"{c_source},{method_name},{ref_line_beginning},{ref_line_ending},{ref_line_ending - ref_line_beginning}\n"
+			csv_line = f"{c_source},{method_name},{pointer},{ref_line_ending},{ref_line_ending - ref_line_beginning}\n"
 			method_file.write(csv_line)
 
 	return
@@ -357,6 +418,7 @@ def buildAverageStruct():
 			if ('File,Method' in line):
 				continue
 
+			decomp_file = line.strip().split(',')[0]
 			decomp_method = line.strip().split(',')[1]
 			decomp_beg_line = line.strip().split(',')[2]
 			decomp_fin_line = line.strip().split(',')[3]
@@ -369,9 +431,9 @@ def buildAverageStruct():
 
 			if (decomp_method in hit_list.keys() and decomp_method == source_method):
 				if (decomp_name in hit_list[source_method].keys() and decomp_name == source_name):
-					info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid]
-					decomp_info[100] = info
-					hit_list[source_method][source_name][source_uid].append(decomp_info)
+					info = [100,decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid,decomp_file]
+					#decomp_info[100] = info
+					hit_list[source_method][source_name][source_uid].append(info)
 			
 	if (debug_build):
 		for method,name_info in hit_list.items():
@@ -403,22 +465,17 @@ def batchAverage():
 				print(f"\t[+] Name: {name}")
 				for source_uid,probability_list in source_info.items():
 					print(f"\t\t[+] Source UID: {source_uid}")
-
+					
 					try:
 						batch_probability = (100 / len(probability_list)) * batch_coefficient
 						batch_probability = round(batch_probability, 2)
 					except ZeroDivisionError:
 						pass
 
+					for p in probability_list:
+						p[0] = batch_probability
+						print(f"\t\t\t[+] Probability: {p[0]}; Context: {p[1]}")
 					
-					for i in range(len(probability_list)):
-
-						hit_list[method][name][source_uid][i][batch_probability] = hit_list[method][name][source_uid][i][100]
-						
-						if (batch_probability != 100):
-							del hit_list[method][name][source_uid][i][100]
-						
-						print(f"\t\t\t[+] Decomp: {hit_list[method][name][source_uid][i]}")
 	else: # There must be a better way to do this
 		for method,name_info in hit_list.items():
 			for name,source_info in name_info.items():
@@ -429,14 +486,12 @@ def batchAverage():
 						batch_probability = round(batch_probability, 2)
 					except ZeroDivisionError:
 						pass
-
-					for i in range(len(probability_list)):
-
-						hit_list[method][name][source_uid][i][batch_probability] = hit_list[method][name][source_uid][i][100]
+					
+					for p in probability_list:
+						p[0] = batch_probability
 						
-						if (batch_probability != 100):
-							del hit_list[method][name][source_uid][i][100]
-
+					
+	
 	return
 
 def buildLocalityStruct():
@@ -534,11 +589,210 @@ def localityAverage():
 					
 	return
 
-def getParams():
+def formatParam(unformatted,identifier):
+	"""
+	Formats unformatted parameter to extract just the name of the variable being used in the parameter
+	"""
+	acceptable_characters = string.ascii_letters + string.digits
+	if (identifier == '*)'):
+		p = unformatted.split(identifier)[1]
+	else:
+		p = unformatted.split(identifier)[0]
+
+	# This will default scan through the parameter from 0->len(p)
+	forward_parse = True
+
+	for c in p:
+		if (c not in acceptable_characters):
+			forward_parse = False
+
+	# Nothing strange, hopefully....
+	if (forward_parse):
+		i = 0
+		while (p[i] != ' ' and p[i] in acceptable_characters and i < len(p) - 1):
+			i += 1
+		formatted_param = p[0:i + 1]
+	else:
+		i = len(p) - 1
+		beg_line = i
+		while (p[i] != ' ' and p[i] in acceptable_characters and i > -1):
+			i -= 1
+		formatted_param = p[i + 1:beg_line + 1]
+
+	return formatted_param
+
+
+def extractParameters(context,category):
+	global debug_parameter
+
 	param_list = []
+	beg_line = 0
+	end_line = 0
+
+	context_length = len(context)
+	# Start of the vulnerable libc method
+	i = context.index(category)
+	paran_counter = 0
+
+	# I may do something similar to curly counter which I used to find method names.
+	# I thought about a lot of different ways to do this such as using a combination of regular expressions
+	# but could never find anything that was consistent enough to account for all cases
+	# so instead I'm going to go with a pointer and check each characters
+	while i != context_length:
+
+		curr_char = context[i]
+		
+		if (curr_char == '(' and paran_counter == 0):
+			paran_counter += 1
+			beg_line = i # Save the start of the parameters
+		elif (curr_char == '('):
+			paran_counter += 1
+		elif (curr_char == ')'):
+			paran_counter -= 1
+
+		# End of libc method
+		if (paran_counter == 0 and curr_char == ')'):
+			end_line = i
+			break
+
+		i+=1
+
+	params = context[beg_line + 1:end_line].split(',')
+
+	# Now we have everything inside the parenthesis for the hit, just need the names
+	# this will again be tricky because of what exactly is in the parameters.
+	# We could have a casting (i.e. (char *)), pointer to a variable in the heap (i.e. heapVar->var)
+	# and even a string literal. There's a lot more that I'm probably not remembering but I'll
+	# adjust the code as they come
+
+	if (debug_parameter):
+		print(f"[+] Original Context: {context}")
+		print(f"[+] Category: {category}")
 	
+	for param in params:
+		param = param.strip()
+		#print(f"\t[+] Original Param: {param}")
+			
+		if ('""' in param):
+			# Anything insdie string literals should not be considered 
+			# so this if-stmt must come first
+			param_list.append(param)
+
+		elif ('->' in param):
+			formatted_param = formatParam(param,'->')
+			param_list.append(formatted_param)
+
+		elif ('.' in param):
+			formatted_param = formatParam(param,'.')
+			param_list.append(formatted_param)
+
+		elif ('*)' in param):
+			formatted_param = formatParam(param,'*)')
+			param_list.append(formatted_param)
+
+		elif ('[' in param):
+			formatted_param = formatParam(param,'[')
+			param_list.append(formatted_param)
+
+		else:
+			param_list.append(param.strip())
+
+	if (debug_parameter):
+		print(param_list)
+		print('')		
+
+
+	return param_list
+
+def getPreProcessedDirective(directive):
+	grepped = subprocess.Popen(['grep','-r',directive,argv[1]],stdout=subprocess.PIPE).stdout.read().decode('utf-8').split('\n')
 	
+	for grep in grepped:
+
+		if ("#define" in grep and directive in grep):
+			directive_index = grep.split().index(directive) + 1
+			directive_value = grep.split()[directive_index]
+
+			return directive_value
+
 	return
+
+def determineBufferSize(parameter_line,param,method_name):
+	# {directive_name:amount}
+	global known_directives
+	pot_method_name = ""
+
+	# See if the variable is inside method parameters
+	try:
+		pattern = re.compile(r'(?<= ).+?(?=\()')
+		result = re.search(pattern,parameter_line)
+		if (result is None): 
+			pot_method_name = ""
+		else:
+			pot_method_name = result.group()
+	except:
+		pass 
+
+	# See if I'm dealing with a string literal
+	if ('"' in parameter_line):
+		try:
+			patter = re.compile(r'\"(.*?)\"')
+			result = re.search(pattern,parameter_line)
+			if (result is not None):
+				return "String Literal"
+		except:
+			pass
+
+	
+	# If what I'm looking for is a parameter to a method
+	if (pot_method_name == method_name):
+
+		pattern = re.compile(r'\((.*?)\)')
+		result = re.search(pattern,parameter_line)
+		if (result is not None):
+			params = result.group().split(',')
+
+			for p in params:
+				if (param in p):
+					parameter_line = p
+					break
+
+	if ('int' in parameter_line and '*' in parameter_line):
+		return 'int *'
+	elif ('int' in parameter_line):
+		return 'int *'
+	elif ('char' in parameter_line and '*' in parameter_line):
+		return 'char *'
+	elif ('struct' in parameter_line):
+		return 'struct'
+
+	if ('char' in parameter_line and '[' in parameter_line):
+		pattern = re.compile(r'(?<=\[).+?(?=\])')
+		result = re.search(pattern,parameter_line)
+
+		#print(f"Regex Result: {result.group()}")
+		try:
+			result = int(result.group())
+			return result
+		except ValueError:
+			# Preprocessed directive probably, find the line where the preprocessed directive was initialized
+			directive = result.group()
+
+			if (directive in known_directives.keys()):
+				return known_directives[directive]
+			else:
+				if ('+' in directive or '-' in directive or '*' in directive or '/' in directive):
+					directive_pattern = re.compile(r'[a-zA-Z_]+')
+					directive = re.search(directive_pattern,directive).group()
+										
+
+				directive_size = getPreProcessedDirective(directive)
+				known_directives[directive] = directive_size
+				return directive_size
+	elif ('char' in parameter_line):
+		return 'char'
+
+	return "Not Found"
 
 def paramSizeAverage():
 	"""
@@ -547,12 +801,22 @@ def paramSizeAverage():
 	decompiled code
 	"""
 
-	# {method: {name: {source_uid: [{probability:decomp_info},{probability:decomp_info},...] } } }
-	# decomp_info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid]
+	# {method: {name: {source_uid: [[probability:decomp_info],[probability:decomp_info],...] } } }
+	# decomp_info = [decomp_context,decomp_hit_line,decomp_beg_line,decomp_fin_line,decomp_uid,decompile_file]
 	global hit_list
 
-	# source_line_information = {uid:[hit_line,beginning_line,end_line,file],uid:[hit_line,beginning_line,end_line,file] }
+	# source_line_information = {source_uid:[hit_line,beginning_line,end_line,file,size],uid:[hit_line,beginning_line,end_line,file] }
 	global source_line_information
+
+	# source_hit_buffer_sizes = {parameter_name:size/type,parameter_name:size/type,...}
+	global source_hit_buffer_sizes
+
+	# decompile_hit_buffer_sizes = {parameter_name:size/type,paramter_name:size/type,...}
+	global decompile_hit_buffer_sizes
+
+	global debug_parameter_average
+	global name_and_size_coefficient
+	global name_coefficient
 
 	source_compiled = open('source_compiled.csv','r').readlines()
 	decompile_compiled = open('decomp_compiled.csv','r').readlines()
@@ -570,25 +834,123 @@ def paramSizeAverage():
 				method_name = source_line_information[uid][4]
 
 				# Get the context for the source hit
-				param_list = []
 				for line in source_compiled:
 					source_uid = line.strip().split(',')[-1]
+
 					if (uid == source_uid):
-						source_context = (",".join(line.strip().split(',')[6:-1])).split('\t')[0]
-						param_list = getParams(source_context)
-
-
-				f = open(source_file,'r').readlines()
-				ref_line = method_start
-				while (ref_line != method_end):
 					
-					print(f[ref_line].strip())
-					ref_line += 1
+						source_context = (",".join(line.strip().split(',')[6:-1])).split('\t')[0]
+						source_name = line.strip().split(',')[5]
 
+						# Extract the parameters from the context
+						source_param_list = extractParameters(source_context,source_name)
+						
+						# Scan through the source code to find where the parameters were initialized
+						f = open(source_file,'r').readlines()
+						for i in range(method_start,method_end):
+							
+							# Compare every parameter to every line
+							# TODO: The way the parameters are formatted/extracted greatly impacts whether or not 
+							#       the initialization line is found. 
+							for param in source_param_list:
 
+								if ('""' in param): param = param.replace('""','"')
+								
+								# Line was found, ensure the param doesn't already have an associated initializer
+								if (param in f[i] and param not in source_hit_buffer_sizes):
 
+									t = determineBufferSize(f[i],param,method)
+									source_hit_buffer_sizes[param] = t
 
+						# Extract the parameters for each decompiled hit and do appropriate calculations
+						decompiled_context = ""
+						for d in hit_list[method][name][uid]:
+
+							# Extract parameter names from the decompiled context
+							decompiled_context = d[1]
+							decompiled_param_list = extractParameters(decompiled_context,source_name)
+							
+							# Associate every parameter with a buffer size
+							decompile_file = d[-1]
+							decompile_method_start = int(d[3])
+							decompile_method_end = int(d[4])
+							f = open(decompile_file,'r').readlines()
+							
+							for i in range(decompile_method_start,decompile_method_end):
+								
+								# Compare every parameter to every line
+								# TODO: The way the parameters are formatted/extracted greatly impacts whether or not 
+								#       the initialization line is found. 
+								for decomp_param in decompiled_param_list:
+									
+									if ('""' in decomp_param): decomp_param = decomp_param.replace('""','"')
+
+									# Line was found, ensure param doesn't already have an associated initializer
+									if (decomp_param in f[i] and decomp_param not in decompile_hit_buffer_sizes):
+										
+										t = determineBufferSize(f[i].strip(),decomp_param,method)
+										decompile_hit_buffer_sizes[decomp_param] = t
+
+							### This is where the average actually gets averaged. I considred making a method for this but had
+							### no way of referencing each source hit to the parameters without saving the uid							
+							decompile_hit_probability = d[0]
+							for source_parameter_name,source_size in source_hit_buffer_sizes.items():
+								i = 0
+								for decompile_parameter_name,decompile_size in decompile_hit_buffer_sizes.items():
+									
+									try:
+										source_size = int(source_size)
+										decompile_size = int(decompile_size)
+									except:
+										pass
+
+									
+									if (source_parameter_name == decompile_parameter_name and source_size == decompile_size):
+										decompile_hit_probability = decompile_hit_probability + (100 * name_and_size_coefficient)
+										decompile_hit_buffer_sizes.pop(decompile_parameter_name)
+										i += 1
+										break
+									
+									elif (source_parameter_name == decompile_parameter_name):
+										decompile_hit_probability = decompile_hit_probability + (100 * name_coefficient)
+										decompile_hit_buffer_sizes.pop(decompile_parameter_name)
+										i += 1
+										break
+
+									elif (source_size == decompile_size and source_size != 'Not Found'):
+										decompile_hit_probability = decompile_hit_probability + (100 * size_coefficient)
+										decompile_hit_buffer_sizes.pop(decompile_parameter_name)
+										i += 1
+										break
+
+							# If nothing matched decrease the probability
+							if (i == 0):
+								decompile_hit_probability = decompile_hit_probability - (100 * none_coefficient)
+
+							
+							# Cannot exceed 100%
+							if (decompile_hit_probability > 100):
+								decompile_hit_probability = 100
+							
+							d[0] = decompile_hit_probability
+							# Clear the dictionaries for the next round of hits
+							decompile_hit_buffer_sizes = {}
+						source_hit_buffer_sizes = {}
+	
+	if (debug_parameter_average):
+		for method,name in hit_list.items():
+			print(f"[+] Method: {method}")
+			for name,source_context in name.items():
+				print(f"\t[+] Category: {name}")
+				for uid,decomp_hits in source_context.items():
+					print(f"\t\t[+] UID: {uid}")
+					source_context = source_hit_buffer_sizes
+					for d in decomp_hits:
+						print(f"\t\t\t[+] Decompile Hit: {d}")
+					
 	return
+
+
 
 
 def multiStagedAnalysis():
