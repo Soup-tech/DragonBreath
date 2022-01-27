@@ -71,5 +71,10 @@ dragonBreath.py> Finished!
   </body> 
   <h2><a id="Smaug">Smaug</a></h2>
     <p>Smaug was an experimental Python script that I worked on in my free time while working for the NASA IV&V WVSGC project. Smaug is meant to be an encapsulation of all the work I had done while working on the project. Smaug, using the revised FlawFinder ruleset, would scan both source code and decompiled byte code and attempt to match the vulnerability detected in the original source code with the corresponding vulnerability in the decompiled machine code.</p>
+    <p>Here is the code from Aeon, which contains its CVE.</p>
+    <img src='assets/Ghidra_Code.png' width="100%">
+    <p>Here, Smaug was able to detect the CVE in the original source code and in the decompiled byte code produced by Ghidra.</p>
+    <img src="Results.png" width="100%">
+    <p>Note that Smaug is nowhere near complete and has much more work to be doen</p>
 </html>
 
