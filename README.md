@@ -67,10 +67,9 @@ Art by                       `:.`---.__         `-._
 [+] Decompiling: __gmon_start__ @ 0x001070c8
 [+] Decompiling: _ITM_registerTMCloneTable @ 0x00107120
 dragonBreath.py> Finished!
-    </pre>
-    
-    
-    
-  </body>
-  <h2><a id="Smaug">Smaug</a>
+	   </pre>
+  </body> 
+  <h2><a id="Smaug">Smaug</a></h2>
+    <p>Smaug was an experimental Python script that I worked on in my free time while working for the NASA IV&V WVSGC project. Smaug is meant to be an encapsulation of all the work I had done while working on the project. Smaug, using the revised FlawFinder ruleset, would scan both source code and decompiled byte code and attempt to match the vulnerability detected in the original source code with the corresponding vulnerability in the decompiled machine code.</p>
 </html>
+
