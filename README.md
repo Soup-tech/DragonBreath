@@ -75,6 +75,6 @@ dragonBreath.py> Finished!
     <img src='assets/Ghidra_Code.png' width="50%">
     <p>Here, Smaug was able to detect the CVE in the original source code and in the decompiled byte code produced by Ghidra.</p>
     <img src="assets/Results.png" width="100%">
-    <p>Note that Smaug is nowhere near complete and has much more work to be doen</p>
+    <p>Note that Smaug is nowhere near completion</p>
 </html>
 
